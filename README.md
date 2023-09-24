@@ -23,7 +23,7 @@
 
 ## Scénario testable
 
-1. Commencez par lancer le script d'initialisation de la base de données, création des tables et insertion des fixtures.
+1. Commencez par lancer le script d'initialisation de la base de données, création des tables et insertion des fixtures, donc   assurez-vous qu'aucune autre application n'utilise une base de données portant le même nom..
 
 2. Dans cette base, il y a 3 utilisateurs :
    - utilisateur1@email.com, motdepasse1
