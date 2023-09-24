@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page d'accueil</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-5">Bienvenue sur la page d'accueil</h1>
+        <p>Vous êtes connecté.</p>
+        
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <button id="getTokensButton" class="btn btn-primary btn-block">Voir Mes Tokens</button>
+            </div>
+            <div class="col-md-3 mb-3">
+                <button id="getAvailablesTokensButton" class="btn btn-primary btn-block">Tockens disponibles</button>
+            </div>
+            <div class="col-md-3 mb-3">
+                <button id="getContractsButton" class="btn btn-primary btn-block">Voir Mes Contrats</button>
+            </div>
+            <div class="col-md-3 mb-3">
+                <button id="getBienButton" class="btn btn-primary btn-block">Voir Mes Biens</button>
+            </div>
+            <div class="col-md-3 mb-3">
+                <button id="getAvailablesBiensButton" class="btn btn-primary btn-block">Opportuniteés diponible</button>
+            </div>
+            <div class="col-md-3 mb-3">
+                <button id="vendreButton" class="btn btn-primary btn-block">Declarez que vous etes vendeur</button>
+            </div>
+            <div class="col-md-3 mb-3">
+                <button id="acheterButton" class="btn btn-primary btn-block">Declarer que vous etes acheteur</button>
+            </div>
+        </div>
+        
+        <!-- Div pour afficher les cartes Bootstrap -->
+        <div id="tokenCards" class="mt-4"></div>
+        
+
+        <script>
+
+//######################################################################################################################
+
+            // Écoutez le clic sur le bouton
+            document.getElementById("getAvailablesBiensButton").addEventListener('click', () => {
+                // Effectuez une requête GraphQL pour récupérer les tokens de l'utilisateur
+                fetch('/graphql', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: `
+                            query {
+                                getAvailableProp {
+                                    id 
+                                    seller
+                                    description
+                                    loc
+                                    value
+                                    stat
+                                }
+                            }
+                        `,
+                    }),
+                })
+                .then((response) => response.json())
+                .then((data) => {
+                    // Traitez les données et affichez les tokens de l'utilisateur
+                    const biens = data.data.getAvailableProp;
+                   
+                    // Créez les cartes Bootstrap pour afficher les tokens
+                    const tokenCardsContainer = document.getElementById('tokenCards');
+                    tokenCardsContainer.innerHTML = '';
+
+                    biens.forEach((bien) => {
+                        const card = document.createElement('div');
+                        card.classList.add('card', 'mb-3');
+                        const buttonId = `acheterButton${bien.id}`;
+                        card.innerHTML = `
+                            <div class="card-body">
+                                <h5 class="card-title">Numero du Bien: ${bien.id}</h5>
+                                <p class="card-text">Le vendeur: ${bien.seller}</p>
+                                <p class="card-text">descirption: ${bien.description}</p>
+                                <p class="card-text">Localisation: ${bien.loc}</p>
+                                <p class="card-text">Valeur: ${bien.value}</p>
+                                <p class="card-text">Status: ${bien.stat}</p>
+                                <button id="${buttonId}" data-id="${bien.id}" class="btn btn-warning">Acheter</button>
+                            </div>
+                        `;
+                        tokenCardsContainer.appendChild(card);
+
+                                                // Sélectionnez le bouton "Acheter" par son identifiant
+                        const acheterButton = document.getElementById(buttonId);
+                    
+
+                        // Ajoutez un gestionnaire d'événements pour le clic sur le bouton
+                        acheterButton.addEventListener("click", () => {
+                        // Récupérez l'identifiant du bien à partir de l'attribut data-id
+                        const bienId = acheterButton.getAttribute("data-id");
+
+                        // Envoyez une demande d'achat au serveur en utilisant une fonction appropriée
+                        envoyerDemandeAchat(parseInt(bienId));
+                        });
+                    });
+                })
+                .catch((error) => {
+                    console.error(error);
+                });
+            });
+            function envoyerDemandeAchat(bienId) {
+                const requestData = {
+                        query: `
+                        mutation EnvoyerDemandeAchat($propId: Int!) {
+                            buyProperty(propId: $propId) {
+                            id
+                            description
+                            loc
+                            value
+                            stat
+                            }
+                        }
+                        `,
+                        variables: {
+                        propId: bienId,
+                        },
+                };
+
+                // Effectuez la requête POST vers votre serveur GraphQL
+                fetch('/graphql', {
+                    method: 'POST',
+                    headers: {
+                    'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData),
+                })
+                    .then((response) => response.json())
+                    .then((data) => {
+                    // Gérez la réponse du serveur ici
+                    console.log(data);
+                    if (data.errors) {
+                        console.error("Erreur lors de l'envoi de la demande d'achat : ", data.errors);
+                    } else {
+                        console.log("La demande d'achat a été envoyée avec succès.");
+                    }
+                    })
+                    .catch((error) => {
+                    console.error("Erreur lors de l'envoi de la demande d'achat : ", error);
+                    });
+
+            }
+
+
+//###################################################################################################################################
+            
+
+            // Écoutez le clic sur le bouton
+            document.getElementById("getBienButton").addEventListener('click', () => {
+                // Effectuez une requête GraphQL pour récupérer les tokens de l'utilisateur
+                fetch('/graphql', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: `
+                            query {
+                                getAllProp  {
+                                    id 
+                                    seller
+                                    description
+                                    loc
+                                    value
+                                    stat
+                                }
+                            }
+                        `,
+                    }),
+                })
+                .then((response) => response.json())
+                .then((data) => {
+                    // Traitez les données et affichez les tokens de l'utilisateur
+                    const biens = data.data.getAllProp;
+                   
+                    // Créez les cartes Bootstrap pour afficher les tokens
+                    const tokenCardsContainer = document.getElementById('tokenCards');
+                    tokenCardsContainer.innerHTML = '';
+
+                    biens.forEach((bien) => {
+                        const card = document.createElement('div');
+                        card.classList.add('card', 'mb-3');
+                        const buttonId = `vendreButton${bien.id}`;
+                        card.innerHTML = `
+                            <div class="card-body">
+                                <h5 class="card-title">Numero du Bien: ${bien.id}</h5>
+                                <p class="card-text">Le vendeur: ${bien.seller}</p>
+                                <p class="card-text">descirption: ${bien.description}</p>
+                                <p class="card-text">Localisation: ${bien.loc}</p>
+                                <p class="card-text">Valeur: ${bien.value}</p>
+                                <p class="card-text">Status: ${bien.stat}</p>
+                                <button id="${buttonId}" data-id="${bien.id}" class="btn btn-warning">Vendre</button>
+                            </div>
+                        `;
+                        tokenCardsContainer.appendChild(card);
+
+                        const vendreButton = document.getElementById(buttonId);
+                    
+
+                    // Ajoutez un gestionnaire d'événements pour le clic sur le bouton
+                    vendreButton.addEventListener("click", () => {
+                    // Récupérez l'identifiant du bien à partir de l'attribut data-id
+                    const bienId = vendreButton.getAttribute("data-id");
+
+                    // Envoyez une demande d'achat au serveur en utilisant une fonction appropriée
+                    envoyerDemandeVente(parseInt(bienId));
+                    });
+                    });
+                })
+                .catch((error) => {
+                    console.error(error);
+                });
+            });
+
+            function envoyerDemandeVente(bienId) {
+                const requestData = {
+                        query: `
+                        mutation EnvoyerDemandeVente($propId: Int!) {
+                            sellProperty(propId: $propId) {
+                            id
+                            description
+                            loc
+                            value
+                            stat
+                            }
+                        }
+                        `,
+                        variables: {
+                        propId: bienId,
+                        },
+                };
+
+                // Effectuez la requête POST vers votre serveur GraphQL
+                fetch('/graphql', {
+                    method: 'POST',
+                    headers: {
+                    'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData),
+                })
+                    .then((response) => response.json())
+                    .then((data) => {
+                    // Gérez la réponse du serveur ici
+                    console.log(data);
+                    if (data.errors) {
+                        console.error("Erreur lors de l'envoi de la demande d'achat : ", data.errors);
+                    } else {
+                        console.log("La demande d'achat a été envoyée avec succès.");
+                    }
+                    })
+                    .catch((error) => {
+                    console.error("Erreur lors de l'envoi de la demande d'achat : ", error);
+                    });
+
+            }
+
+//#################################################################################################################################
+            // Écoutez le clic sur le bouton
+            document.getElementById("getTokensButton").addEventListener('click', () => {
+                // Effectuez une requête GraphQL pour récupérer les tokens de l'utilisateur
+                fetch('/graphql', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: `
+                            query {
+                                getAllTokens {
+                                    id
+                                    value
+                                }
+                            }
+                        `,
+                    }),
+                })
+                .then((response) => response.json())
+                .then((data) => {
+                    // Traitez les données et affichez les tokens de l'utilisateur
+                    const tokens = data.data.getAllTokens;
+                   
+                    // Créez les cartes Bootstrap pour afficher les tokens
+                    const tokenCardsContainer = document.getElementById('tokenCards');
+                    tokenCardsContainer.innerHTML = '';
+
+                    tokens.forEach((token) => {
+                        const card = document.createElement('div');
+                        card.classList.add('card', 'mb-3');
+                        const buttonId = `vendreButton${token.id}`;
+                        card.innerHTML = `
+                            <div class="card-body">
+                                <h5 class="card-title">Token ID: ${token.id}</h5>
+                                <p class="card-text">Token Value: ${token.value}</p>
+                                <button id="${buttonId}" class="btn btn-warning">Vendre</button>
+                            </div>
+                        `;
+                        tokenCardsContainer.appendChild(card);
+                    });
+                })
+                .catch((error) => {
+                    console.error(error);
+                });
+            });
+
+            //##############################################################################################
+            // Écoutez le clic sur le bouton
+       // Écoutez le clic sur le bouton pour récupérer les tokens
+document.getElementById("getAvailablesTokensButton").addEventListener('click', () => {
+    // Effectuez une requête GraphQL pour récupérer les tokens de l'utilisateur
+    fetch('/graphql', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            query: `
+                query {
+                    getAvailableTokens {
+                        id
+                        value
+                    }
+                }
+            `,
+        }),
+    })
+    .then((response) => response.json())
+    .then((data) => {
+        // Traitez les données et affichez les tokens de l'utilisateur
+        const availableTokens = data.data.getAvailableTokens;
+       
+        // Créez un conteneur pour afficher les cartes des tokens
+        const tokenCardsContainer = document.getElementById('tokenCards');
+        tokenCardsContainer.innerHTML = '';
+
+        availableTokens.forEach((token) => {
+            const card = document.createElement('div');
+            card.classList.add('card', 'mb-3');
+            const buttonId = `acheterButton${token.id}`;
+            card.innerHTML = `
+                <div class="card-body">
+                    <h5 class="card-title">Token ID: ${token.id}</h5>
+                    <p class="card-text">Token Value: ${token.value}</p>
+                    <button id="${buttonId}" data-id="${token.id}" class="btn btn-warning">Acheter</button>
+                </div>
+            `;
+            tokenCardsContainer.appendChild(card);
+
+            // Sélectionnez le bouton "Acheter" par son identifiant
+            const acheterButton = document.getElementById(buttonId);
+
+            // Ajoutez un gestionnaire d'événements pour le clic sur le bouton
+            acheterButton.addEventListener("click", () => {
+                // Récupérez l'identifiant du token à partir de l'attribut data-id
+                const tokenId = acheterButton.getAttribute("data-id");
+
+                // Envoyez une demande d'achat au serveur en utilisant une fonction appropriée
+                envoyerDemandeAchatToken(parseInt(tokenId));
+            });
+        });
+    })
+    .catch((error) => {
+        console.error(error);
+    });
+});
+
+function envoyerDemandeAchatToken(tokenId) {
+                const requestData = {
+                        query: `
+                        mutation EnvoyerDemandeAchatToken($tokenId: ID!) {
+                            purchaseTokens(tokenId: $tokenId) {
+                            id
+                            value
+                            }
+                        }
+                        `,
+                        variables: {
+                        tokenId: tokenId,
+                        },
+                };
+
+                // Effectuez la requête POST vers votre serveur GraphQL
+                fetch('/graphql', {
+                    method: 'POST',
+                    headers: {
+                    'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData),
+                })
+                    .then((response) => response.json())
+                    .then((data) => {
+                    // Gérez la réponse du serveur ici
+                    console.log(data);
+                    if (data.errors) {
+                        console.error("Erreur lors de l'envoi de la demande d'achat : ", data.errors);
+                    } else {
+                        console.log("La demande d'achat a été envoyée avec succès.");
+                    }
+                    })
+                    .catch((error) => {
+                    console.error("Erreur lors de l'envoi de la demande d'achat : ", error);
+                    });
+            }
+
+
+
+            //##############################################################################################
+            // Écoutez le clic sur le bouton
+            document.getElementById('getContractsButton').addEventListener('click', () => {
+                // Effectuez une requête GraphQL pour récupérer les tokens de l'utilisateur
+                fetch('/graphql', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: `
+                            query {
+                                getAllSmartContracts {
+                                    id
+                                    name
+                                }
+                            }
+                        `,
+                    }),
+                })
+                .then((response) => response.json())
+                .then((data) => {
+                    // Traitez les données et affichez les tokens de l'utilisateur
+                    const contracts = data.data.getAllSmartContracts;
+
+                    // Créez les cartes Bootstrap pour afficher les tokens
+                    const tokenCardsContainer = document.getElementById('tokenCards');
+                    tokenCardsContainer.innerHTML = '';
+
+                    contracts.forEach((contract) => {
+                        const card = document.createElement('div');
+                        card.classList.add('card', 'mb-3');
+                        card.innerHTML = `
+                            <div class="card-body">
+                                <h5 class="card-title">id du contrat: ${contract.id}</h5>
+                                <p class="card-text">nom du contrat: ${contract.name}</p>
+                            </div>
+                        `;
+                        tokenCardsContainer.appendChild(card);
+                    });
+                })
+                .catch((error) => {
+                    console.error(error);
+                });
+            });
+
+
+//#####################################################################################################################################
+                const acheterButton = document.getElementById("acheterButton");
+                acheterButton.addEventListener("click", async () => {
+                    try {
+                        // Effectuez une requête au serveur pour obtenir le userId
+                        const response = await fetch('/getUserId', {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                        });
+
+                        const data = await response.json();
+
+                        if (data.userId) {
+                            const userId = data.userId;
+
+                            // Ensuite, utilisez le userId dans votre requête GraphQL
+                            const graphqlResponse = await fetch('/graphql', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    query: `
+                                        mutation ($userId: ID!) {
+                                            setUserAsBuyer(userId: $userId) {
+                                                id
+                                            }
+                                        }
+                                    `,
+                                    variables: { userId },
+                                }),
+                            });
+
+                            const graphqlData = await graphqlResponse.json();
+
+                            if (graphqlData.errors) {
+                                console.error('Une erreur est survenue :', graphqlData.errors);
+                            } else {
+                                console.log('Utilisateur mis à jour en tant qu\'acheteur :', graphqlData.data.setUserAsBuyer);
+                            }
+                        } else {
+                            console.error('Impossible d\'obtenir le userId depuis le serveur.');
+                        }
+                    } catch (error) {
+                        console.error('Erreur lors de la communication avec le backend :', error);
+                    }
+                });
+//##################################################################################################################################
+                const vendreButton = document.getElementById("vendreButton");
+                acheterButton.addEventListener("click", async () => {
+                    try {
+                        // Effectuez une requête au serveur pour obtenir le userId
+                        const response = await fetch('/getUserId', {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                        });
+
+                        const data = await response.json();
+
+                        if (data.userId) {
+                            const userId = data.userId;
+
+                            // Ensuite, utilisez le userId dans votre requête GraphQL
+                            const graphqlResponse = await fetch('/graphql', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    query: `
+                                        mutation ($userId: ID!) {
+                                            setUserAsSeller(userId: $userId) {
+                                                id
+                                            }
+                                        }
+                                    `,
+                                    variables: { userId },
+                                }),
+                            });
+
+                            const graphqlData = await graphqlResponse.json();
+
+                            if (graphqlData.errors) {
+                                console.error('Une erreur est survenue :', graphqlData.errors);
+                            } else {
+                                console.log('Utilisateur mis à jour en tant qu\'acheteur :', graphqlData.data.setUserAsBuyer);
+                            }
+                        } else {
+                            console.error('Impossible d\'obtenir le userId depuis le serveur.');
+                        }
+                    } catch (error) {
+                        console.error('Erreur lors de la communication avec le backend :', error);
+                    }
+                });
+
+//################################################################################################################################
+
+
+
+
+
+
+        </script>
+
+        <!-- Bouton de déconnexion -->
+        <form action="/logout" method="GET">
+            <button type="submit" class="btn btn-danger">Déconnexion</button>
+        </form>
+    </div>
+</body>
+</html>

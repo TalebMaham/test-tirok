@@ -1,0 +1,23 @@
+{
+  "name": "test-tirok",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "apollo-server": "^3.12.1",
+    "apollo-server-express": "^3.12.1",
+    "express": "^4.18.2",
+    "express-graphql": "^0.12.0",
+    "express-session": "^1.17.3",
+    "graphql": "^16.8.1",
+    "graphql-tools": "^9.0.0",
+    "or": "^0.2.0",
+    "pg-promise": "^11.5.4"
+  }
+}
